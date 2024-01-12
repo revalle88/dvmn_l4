@@ -2,7 +2,7 @@ import asyncio
 import aiofiles
 from datetime import datetime
 
-FILENAME = "history.txt"
+import settings
 
 
 async def save_to_file(filename, message):
@@ -11,16 +11,14 @@ async def save_to_file(filename, message):
         await file.write(f"[{timestamp}] {message}\n")
 
 
-async def tcp_echo_client():
-    reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5000)
-
+async def tcp_client():
+    reader, writer = await asyncio.open_connection(settings.host, settings.port)
     try:
         while True:
             data = await reader.read(1000)
-            print(data)
             message = data.decode()
             print(f"Received: {message!r}")
-            await save_to_file("filename.txt", message)
+            await save_to_file(settings.history_file, message)
     except asyncio.CancelledError:
         print("Отмена операции")
     except ConnectionError:
@@ -30,4 +28,10 @@ async def tcp_echo_client():
         await writer.wait_closed()
 
 
-asyncio.run(tcp_echo_client())
+def main():
+    settings.init_config()
+    asyncio.run(tcp_client())
+
+
+if __name__ == "__main__":
+    main()
